@@ -7,12 +7,12 @@ spring:
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: com.kafka.streaming.serdes.TransactionSerializer
     streams:
       application-id: fraud-detection-streams
       properties:
         default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-        default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: com.kafka.streaming.serdes.TransactionSerde
 
 server:
   port: 8085

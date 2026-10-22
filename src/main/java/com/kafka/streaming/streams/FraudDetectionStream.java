@@ -1,13 +1,16 @@
 package com.kafka.streaming.streams;
 
 import com.kafka.streaming.events.Transaction;
+import com.kafka.streaming.serdes.TransactionSerde;
 import lombok.extern.log4j.Log4j2;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
-import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableKafkaStreams
@@ -15,28 +18,15 @@ import tools.jackson.databind.ObjectMapper;
 public class FraudDetectionStream {
 
     @Bean
-    KStream<String, String> fraudDetectionStreams(StreamsBuilder streamsBuilder) {
+    KStream<String, Transaction> fraudDetectionStreams(StreamsBuilder streamsBuilder) {
 
-        // Step 1: Read messages from the input topic.
-        KStream<String, String> transactionsStream = streamsBuilder.stream("transactions");
+        KStream<String, Transaction> transactionsStream = streamsBuilder.stream("transactions", Consumed.with(Serdes.String(), new TransactionSerde()));
 
-        // Step 2: Process the stream to detect fraudulent transactions.
-        KStream<String, String> fraudTransactionStream = transactionsStream.filter(((key, value) -> isSuspicious(value)))
-                .peek((key, value) -> log.warn("⚠️ FRAUD ALERT - transactionId={} , value={}", key, value));
-
-        // Step 3: write detected fraudulent transactions to an output topic.
-        fraudTransactionStream.to("fraud-alerts");
+        transactionsStream
+                .filter((key, tx) -> tx.amount() > 10000)
+                .peek((key, tx) -> log.warn("⚠️ FRAUD ALERT for {}", tx))
+                .to("fraud-alerts", Produced.with(Serdes.String(), new TransactionSerde()));
 
         return transactionsStream;
-    }
-
-    private boolean isSuspicious(String value) {
-        try {
-            Transaction transaction = new ObjectMapper()
-                    .readValue(value, Transaction.class); // validate JSON
-            return transaction.amount() > 10000; // simple fraud rule
-        } catch (Exception _) {
-            return false;
-        }
     }
 }

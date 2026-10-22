@@ -3,7 +3,6 @@ package com.kafka.streaming.service;
 import com.kafka.streaming.events.Transaction;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -12,16 +11,13 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service
 public class TransactionService {
 
-    private final ObjectMapper objectMapper;
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, Transaction> kafkaTemplate;
     private final Clock clock;
 
     public TransactionService(
-            KafkaTemplate<String, String> kafkaTemplate,
-            ObjectMapper objectMapper,
+            KafkaTemplate<String, Transaction> kafkaTemplate,
             Clock clock) {
         this.kafkaTemplate = kafkaTemplate;
-        this.objectMapper = objectMapper;
         this.clock = clock;
     }
 
@@ -42,9 +38,7 @@ public class TransactionService {
                     LocalDateTime.now(clock)
             );
 
-            String txnJson = objectMapper.writeValueAsString(txn);
-
-            kafkaTemplate.send("transactions", transactionId, txnJson);
+            kafkaTemplate.send("transactions", transactionId, txn);
         }
 
         return "Transaction sent to Kafka!";
