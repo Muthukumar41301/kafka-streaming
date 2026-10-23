@@ -3,6 +3,7 @@ package com.kafka.streaming.controller;
 import com.kafka.streaming.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,5 +17,11 @@ public class TransactionController {
     @GetMapping("/transaction/process")
     public String processTransaction() {
         return transactionService.processTransactions();
+    }
+
+
+    @PostMapping("transaction/publish")
+    public String publishTransaction() {
+        return transactionService.publishTransaction();
     }
 }
